@@ -1,16 +1,59 @@
-<button id="button">Play</button>
+
+<div class="panels">
+	
+	<div class="panel tx">
+		<h2>Tx</h2>
+		<hr>
+		<button id="play-test-signal">Play test signal</button>
+	</div>
+	
+	<div class="panel rx">
+		<h2>Rx</h2>
+		<hr>
+		<button id="listen">Listen</button>
+		<hr>
+		<canvas id="waterfall" width="200" height="50"></canvas>
+	</div>
+</div>
+
+<style>
+	
+	* {
+		box-sizing: border-box;
+	}
+	
+	.panels {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+	}
+	
+	.panel {
+		margin: 10px;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		background-color: #eee;
+		padding: 10px;
+	}
+	
+	.panel h2 {
+		margin-top: 0;
+		text-align: center;
+	}
+	
+</style>
 
 <script>
 	
 	const audioCtx = new AudioContext;
-	
 	
 	// generator
 	
 	const a = 0.5;
 	const freq = 18000;
 	
-	button.onclick = () => {
+	const playButton = document.getElementById('play-test-signal');
+	
+	playButton.onclick = () => {
 		//const message = '11001100101010';
 		sendMessage();
 	};
@@ -50,57 +93,116 @@
 		
 	};
 	
+	
 	// analyzer
 	
+	const waterfall = {
+		ctx: document.getElementById('waterfall').getContext('2d'),
+		width: 200,
+		height: 50,
+		pointHeight: 10,
+		dataStack: [],
+		addLine(newLine) {
+			this.dataStack.push(newLine);
+			this.drawStack();
+		},
+		clear() {
+			this.dataStack = [];
+			this.ctx.fillStyle = 'black';
+			this.ctx.fillRect(0, 0, this.width, this.height);
+		},
+		drawStack() {
+			this.clear;
+			this.dataStack.forEach((line, lineIndex) => {
+				line.forEach((point, index, points) => {
+					const pointWidth = this.width / points.length;
+					//console.log(this.width, numberOfPoints);
+					const pointHorizontalShift = index * pointWidth;
+					
+					const x1 = pointHorizontalShift;
+					const y1 = this.height - (this.pointHeight * (lineIndex + 1));
+					
+					// 0 => 1
+					// -100 => 0
+					const intensity = point * -1 / 100;
+					
+					this.ctx.fillStyle = `rgba(205, 143, 255, ${intensity})`;
+					this.ctx.fillRect(x1, y1, pointWidth, this.pointHeight);
+				});
+			});
+		},
+	};
 	
-	if (navigator.mediaDevices) {
-		navigator.mediaDevices.getUserMedia({audio: true, /*video: true*/}).then(function(stream) {
-			
-			//var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-			var analyser = audioCtx.createAnalyser();
-			
-			analyser.fftSize = 32;
-			analyser.minDecibels = -110;
-			analyser.maxDecibels = -10;
-			analyser.smoothingTimeConstant = 0; // 0..1 (0 = no time averaging). Default 0.8.
-			
-			source = audioCtx.createMediaStreamSource(stream);
-			source.connect(analyser);
-			
-			
-			// create array to recieve data
-			
-			var bufferLength = analyser.frequencyBinCount;
-			
-			
-			setInterval(() => {
-				fFrequencyData = new Float32Array(bufferLength);
-				//bFrequencyData = new Uint8Array(bufferLength); 
-				//bTimeData = new Uint8Array(bufferLength);
+	waterfall.clear();
+	
+	
+	let factor = 1;
+	
+	setInterval(() => {
+		factor += 1;
+		waterfall.addLine([
+			-10/factor,
+			-20/factor,
+			-40/factor,
+			-60/factor,
+			-40/factor,
+			-20/factor,
+			-10/factor
+		]);
+	}, 100);
+	
+	
+	const listen = () => {
+		if (navigator.mediaDevices) {
+			navigator.mediaDevices.getUserMedia({audio: true, /*video: true*/}).then(function(stream) {
 				
-				analyser.getFloatFrequencyData(fFrequencyData);
-				//analyser.getByteFrequencyData(bFrequencyData);
-				//analyser.getByteTimeDomainData(bTimeData);
+				//var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+				var analyser = audioCtx.createAnalyser();
 				
-				for (var i = 0; i < bufferLength; i++) {
-					console.log(fFrequencyData[i]);
-				}
+				analyser.fftSize = 32;
+				analyser.minDecibels = -110;
+				analyser.maxDecibels = -10;
+				analyser.smoothingTimeConstant = 0; // 0..1 (0 = no time averaging). Default 0.8.
 				
-				console.log('-----');
+				source = audioCtx.createMediaStreamSource(stream);
+				source.connect(analyser);
 				
-				for (var i = 0; i < bufferLength; i++) {
-					//console.log(bFrequencyData[i]);
-				}
 				
-				for (var i = 0; i < bufferLength; i++) {
-					//console.log(bTimeData[i]);
-				}
-			}, 1000);
-			
-			
-			
-		});
+				// create array to recieve data
+				
+				var bufferLength = analyser.frequencyBinCount;
+				
+				
+				setInterval(() => {
+					fFrequencyData = new Float32Array(bufferLength);
+					//bFrequencyData = new Uint8Array(bufferLength); 
+					//bTimeData = new Uint8Array(bufferLength);
+					
+					analyser.getFloatFrequencyData(fFrequencyData);
+					//analyser.getByteFrequencyData(bFrequencyData);
+					//analyser.getByteTimeDomainData(bTimeData);
+					
+					for (var i = 0; i < bufferLength; i++) {
+						console.log(fFrequencyData[i]);
+					}
+					
+					console.log('-----');
+					
+					for (var i = 0; i < bufferLength; i++) {
+						//console.log(bFrequencyData[i]);
+					}
+					
+					for (var i = 0; i < bufferLength; i++) {
+						//console.log(bTimeData[i]);
+					}
+				}, 1000);
+				
+				
+				
+			});
+		}
 	}
+	
 	
 	
 </script>
