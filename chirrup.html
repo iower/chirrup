@@ -1,19 +1,27 @@
 
 <div class="panels">
 	
-	<div class="panel tx">
-		<h2>Tx</h2>
+	<div class="panel rx">
+		<h2>Receiver</h2>
 		<hr>
-		<button id="play-test-signal">Play test signal</button>
+		<canvas id="waterfall" width="280" height="80"></canvas>
+		<label>Decoded messages:</label>
+		<textarea></textarea>
+		<button id="listen">Start listening</button>
 	</div>
 	
-	<div class="panel rx">
-		<h2>Rx</h2>
+	<div class="panel tx">
+		<h2>Transmitter</h2>
 		<hr>
-		<button id="listen">Listen</button>
-		<hr>
-		<canvas id="waterfall" width="200" height="50"></canvas>
+		<label>Broadcast message:</label>
+		<textarea>Hello, universe!</textarea>
+		<div id="tx-buttons">
+			<button id="play-test-signal">Test signal</button>
+			<button id="draw-graffiti">Graffiti</button>
+			<button id="send-message">Send</button>
+		</div>
 	</div>
+	
 </div>
 
 <style>
@@ -22,9 +30,17 @@
 		box-sizing: border-box;
 	}
 	
+	html,
+	body {
+		margin: 0;
+		padding: 0;
+	}
+	
 	.panels {
+		width: 320px;
+		margin-left: auto;
+		margin-right: auto;
 		display: grid;
-		grid-template-columns: 1fr 1fr;
 	}
 	
 	.panel {
@@ -37,8 +53,33 @@
 	
 	.panel h2 {
 		margin-top: 0;
+		margin-bottom: 0px;
 		text-align: center;
 	}
+	
+	.panel button {
+		margin-top: 10px;
+		margin-bottom: 10px;
+		height: 36px;
+	}
+	
+	.panel label {
+		display: block;
+		margin-top: 10px;
+		margin-bottom: 5px;
+		font-size: 14px;
+	}
+	
+	.panel textarea {
+		width: 100%;
+		border: 1px solid #aaa;
+		border-radius: 3px;
+		padding: 5px;
+		font-size: 16px;
+		resize: none;
+	}
+	
+	
 	
 </style>
 
@@ -98,8 +139,8 @@
 	
 	const waterfall = {
 		ctx: document.getElementById('waterfall').getContext('2d'),
-		width: 200,
-		height: 50,
+		width: 280,
+		height: 80,
 		pointHeight: 10,
 		dataStack: [],
 		addLine(newLine) {
@@ -107,12 +148,13 @@
 			this.drawStack();
 		},
 		clear() {
-			this.dataStack = [];
+			//this.dataStack = [];
 			this.ctx.fillStyle = 'black';
 			this.ctx.fillRect(0, 0, this.width, this.height);
 		},
 		drawStack() {
-			this.clear;
+			//this.clear();
+			
 			this.dataStack.forEach((line, lineIndex) => {
 				line.forEach((point, index, points) => {
 					const pointWidth = this.width / points.length;
@@ -139,7 +181,11 @@
 	let factor = 1;
 	
 	setInterval(() => {
-		factor += 1;
+		//if (factor > 100) {
+		//	factor = 1;
+		//} else {
+			factor += 1;
+		//}
 		waterfall.addLine([
 			-10/factor,
 			-20/factor,
